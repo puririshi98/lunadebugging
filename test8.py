@@ -15,11 +15,47 @@ from operator import mul
 from collections import OrderedDict
 
 import torch
+import sys
+import os
+import platform
+import re
+import gc
+import types
+import inspect
+import argparse
+import unittest
+import warnings
+import random
+import contextlib
+import socket
+import subprocess
+import time
+from collections import OrderedDict
+from contextlib import contextmanager
+from functools import wraps
+from itertools import product
+from copy import deepcopy
+from numbers import Number
+import tempfile
 
+import __main__
+import errno
+
+import expecttest
+
+import torch
+import torch.cuda
+from torch._utils_internal import get_writable_path
+from torch._six import string_classes, inf
+import torch.backends.cudnn
+import torch.backends.mkl
+
+
+torch.backends.disable_global_flags()
 # TODO: remove this global setting
 # NN tests use double as the default dtype
 torch.set_default_dtype(torch.double)
-
+import argparse
 from torch._six import inf, nan
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
@@ -34,7 +70,7 @@ from torch.nn import Parameter
 from torch.nn.parameter import UninitializedParameter, UninitializedBuffer
 from torch.nn.parallel._functions import Broadcast
 from torch.testing import get_all_fp_dtypes
-from torch.testing._internal.common_utils import freeze_rng_state, run_tests, TestCase, skipIfNoLapack, skipIfRocm, \
+from torch.testing._internal.common_utils import freeze_rng_state, TestCase, skipIfNoLapack, skipIfRocm, \
     TEST_NUMPY, TEST_SCIPY, TEST_WITH_ROCM, download_file, \
     get_function_arglist, load_tests, repeat_test_for_types, ALL_TENSORTYPES, \
     ALL_TENSORTYPES2, suppress_warnings, TemporaryFileName, TEST_WITH_UBSAN, IS_PPC
@@ -55,8 +91,19 @@ from torch.testing._internal.common_utils import _assertGradAndGradgradChecks, g
 from torch.testing._internal.common_utils import dtype2prec_DONTUSE
 from torch.testing._internal.common_cuda import tf32_on_and_off, tf32_is_not_fp32, tf32_off, tf32_on
 from torch.types import _TensorOrTensors
-
-
+parser = argparse.ArgumentParser(add_help=False)
+parser.add_argument('--subprocess', action='store_true',
+                    help='whether to run each test in a subprocess')
+parser.add_argument('--seed', type=int, default=1234)
+parser.add_argument('--accept', action='store_true')
+args, remaining = parser.parse_known_args()
+TEST_IN_SUBPROCESS = args.subprocess
+SEED = args.seed
+if not expecttest.ACCEPT:
+    expecttest.ACCEPT = args.accept
+UNITTEST_ARGS = [sys.argv[0]] + remaining
+def run_tests(argv=UNITTEST_ARGS):
+    unittest.main(argv=argv)
 AMPERE_OR_ROCM = TEST_WITH_ROCM or tf32_is_not_fp32()
 
 # load_tests from common_utils is used to automatically filter tests for
@@ -15840,5 +15887,4 @@ class TestNNDeviceType(NNTestCase):
 
 instantiate_device_type_tests(TestNNDeviceType, globals())
 
-if __name__ == '__main__':
-    run_tests()
+run_tests()
